@@ -1,0 +1,37 @@
+{
+  "name": "lol-overlay",
+  "version": "1.0.0",
+  "description": "League of Legends Overlay - Champion Information Tool",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "electron-dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron-build": "vite build && electron-builder"
+  },
+  "keywords": ["league-of-legends", "overlay", "electron", "gaming"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "vite": "^5.0.10",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.lol.overlay",
+    "productName": "LoL Overlay",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.js"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

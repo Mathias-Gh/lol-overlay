@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoL Overlay Pro - Champion Info</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script type="module" crossorigin src="./assets/index-S9LA6UNx.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CAqpgHDn.css">
+</head>
+
+<body>
+  <div id="app">
+    <!-- Title Bar -->
+    <div class="title-bar" id="titleBar">
+      <div class="title-bar-left">
+        <span class="app-icon">⚔️</span>
+        <span class="app-title">LoL Overlay Pro</span>
+      </div>
+      <div class="title-bar-controls">
+        <span class="hotkey-hint">F1 toggle</span>
+        <button class="control-btn minimize-btn" id="minimizeBtn">─</button>
+        <button class="control-btn close-btn" id="closeBtn">✕</button>
+      </div>
+    </div>
+
+    <!-- Main Navigation -->
+    <nav class="main-nav" id="mainNav">
+      <button class="nav-btn active" data-view="champions">🎮 Champions</button>
+      <button class="nav-btn" data-view="tierlist">📊 Tier List</button>
+      <button class="nav-btn" data-view="map">🗺️ Carte</button>
+      <button class="nav-btn" data-view="waves">🌊 Waves</button>
+    </nav>
+
+    <!-- ==================== CHAMPIONS VIEW ==================== -->
+    <div class="view active" id="championsView">
+      <!-- Search Section -->
+      <div class="search-section">
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="🔍 Rechercher un champion..." autocomplete="off">
+        </div>
+        <div class="role-filters" id="roleFilters">
+          <button class="role-btn active" data-role="all">Tous</button>
+          <button class="role-btn" data-role="fighter" title="Fighters">⚔️</button>
+          <button class="role-btn" data-role="mage" title="Mages">🔮</button>
+          <button class="role-btn" data-role="assassin" title="Assassins">🗡️</button>
+          <button class="role-btn" data-role="marksman" title="ADC">🏹</button>
+          <button class="role-btn" data-role="support" title="Supports">💚</button>
+          <button class="role-btn" data-role="tank" title="Tanks">🛡️</button>
+        </div>
+      </div>
+
+      <!-- Champion Grid -->
+      <div class="champion-grid" id="championGrid">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Chargement des champions...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CHAMPION DETAIL VIEW ==================== -->
+    <div class="view champion-detail" id="championDetail">
+      <button class="back-btn" id="backBtn">← Retour</button>
+
+      <!-- Champion Header -->
+      <div class="champion-header" id="championHeader">
+        <img class="champion-splash" id="championSplash" src="" alt="">
+        <div class="champion-info-overlay">
+          <div class="champion-tier-badge" id="championTierBadge"></div>
+          <h1 class="champion-name" id="championName"></h1>
+          <p class="champion-title" id="championTitle"></p>
+          <div class="champion-tags" id="championTags"></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="stats">📊 Stats</button>
+        <button class="tab-btn" data-tab="abilities">⚡ Skills</button>
+        <button class="tab-btn" data-tab="builds">🛠️ Build</button>
+        <button class="tab-btn" data-tab="runes">🎯 Runes</button>
+        <button class="tab-btn" data-tab="combos">💥 Combos</button>
+        <button class="tab-btn" data-tab="matchups">⚔️ Matchups</button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- Stats Tab -->
+        <div class="tab-pane active" id="statsTab">
+          <div class="stats-grid" id="statsGrid"></div>
+        </div>
+
+        <!-- Abilities Tab -->
+        <div class="tab-pane" id="abilitiesTab">
+          <div class="skill-order-section" id="skillOrderSection"></div>
+          <div class="abilities-list" id="abilitiesList"></div>
+        </div>
+
+        <!-- Builds Tab -->
+        <div class="tab-pane" id="buildsTab">
+          <div class="build-path" id="buildPath"></div>
+        </div>
+
+        <!-- Runes Tab -->
+        <div class="tab-pane" id="runesTab">
+          <div class="runes-container" id="runesContainer"></div>
+        </div>
+
+        <!-- Combos Tab -->
+        <div class="tab-pane" id="combosTab">
+          <div class="combos-list" id="combosList"></div>
+        </div>
+
+        <!-- Matchups Tab -->
+        <div class="tab-pane" id="matchupsTab">
+          <div class="matchups-container" id="matchupsContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TIER LIST VIEW ==================== -->
+    <div class="view" id="tierlistView">
+      <div class="tierlist-header">
+        <h2>📊 Tier List Méta</h2>
+        <div class="role-select" id="tierRoleSelect">
+          <button class="tier-role-btn active" data-tier-role="top">🛡️ Top</button>
+          <button class="tier-role-btn" data-tier-role="jungle">🌲 Jungle</button>
+          <button class="tier-role-btn" data-tier-role="mid">🔮 Mid</button>
+          <button class="tier-role-btn" data-tier-role="adc">🏹 ADC</button>
+          <button class="tier-role-btn" data-tier-role="support">💚 Support</button>
+        </div>
+      </div>
+      <div class="tierlist-content" id="tierlistContent"></div>
+    </div>
+
+    <!-- ==================== MAP VIEW ==================== -->
+    <div class="view" id="mapView">
+      <div class="map-nav">
+        <button class="map-nav-btn active" data-map-section="dragons">🐉 Dragons</button>
+        <button class="map-nav-btn" data-map-section="baron">👁️ Baron</button>
+        <button class="map-nav-btn" data-map-section="jungle">🌲 Jungle</button>
+        <button class="map-nav-btn" data-map-section="towers">🏰 Tours</button>
+      </div>
+      <div class="map-content" id="mapContent"></div>
+    </div>
+
+    <!-- ==================== WAVES VIEW ==================== -->
+    <div class="view" id="wavesView">
+      <div class="waves-nav">
+        <button class="waves-nav-btn active" data-waves-section="basics">📚 Bases</button>
+        <button class="waves-nav-btn" data-waves-section="states">🎯 États</button>
+        <button class="waves-nav-btn" data-waves-section="tips">💡 Tips</button>
+        <button class="waves-nav-btn" data-waves-section="xp">📈 XP/Gold</button>
+      </div>
+      <div class="waves-content" id="wavesContent"></div>
+    </div>
+  </div>
+
+</body>
+
+</html>
