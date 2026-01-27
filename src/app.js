@@ -8,6 +8,8 @@ import { getDetailedBuild } from './data/championBuilds.js';
 import { tierList, tierColors, getChampionTier } from './data/tierList.js';
 import { dragons, baron, jungleCamps, towers, inhibitors } from './data/mapElements.js';
 import { minionStats, waveTiming, waveStates, waveManagementTips, xpGoldFormulas } from './data/waveManagement.js';
+import { regions } from './data/runeterra.js';
+import { quizQuestions, roleTitles, championSuggestions } from './data/quiz.js';
 
 // DOM Elements
 const mainNav = document.getElementById('mainNav');
@@ -16,6 +18,21 @@ const championDetail = document.getElementById('championDetail');
 const tierlistView = document.getElementById('tierlistView');
 const mapView = document.getElementById('mapView');
 const wavesView = document.getElementById('wavesView');
+const homeView = document.getElementById('homeView');
+const runeterraView = document.getElementById('runeterraView');
+const quizView = document.getElementById('quizView');
+const regionsList = document.getElementById('regionsList');
+const regionDetail = document.getElementById('regionDetail');
+
+// Quiz Elements
+const quizIntro = document.getElementById('quizIntro');
+const quizQuestionContainer = document.getElementById('quizQuestionContainer');
+const quizResult = document.getElementById('quizResult');
+const questionText = document.getElementById('questionText');
+const quizOptions = document.getElementById('quizOptions');
+const quizProgress = document.getElementById('quizProgress');
+const startQuizBtn = document.getElementById('startQuizBtn');
+const restartQuizBtn = document.getElementById('restartQuizBtn');
 const championGrid = document.getElementById('championGrid');
 const searchInput = document.getElementById('searchInput');
 const roleFilters = document.getElementById('roleFilters');
@@ -27,260 +44,285 @@ const closeBtn = document.getElementById('closeBtn');
 let allChampions = {};
 let currentFilter = 'all';
 let currentChampion = null;
-let currentView = 'champions';
+let currentView = 'home';
+
+// Quiz State
+let quizStep = 0;
+let quizScores = {
+  tank: 0,
+  fighter: 0,
+  mage: 0,
+  assassin: 0,
+  marksman: 0,
+  support: 0
+};
 
 // Role mappings
 const roleMap = {
-    'fighter': ['Fighter', 'Bruiser'],
-    'mage': ['Mage'],
-    'assassin': ['Assassin'],
-    'marksman': ['Marksman'],
-    'support': ['Support'],
-    'tank': ['Tank']
+  'fighter': ['Fighter', 'Bruiser'],
+  'mage': ['Mage'],
+  'assassin': ['Assassin'],
+  'marksman': ['Marksman'],
+  'support': ['Support'],
+  'tank': ['Tank']
 };
 
 /**
  * Initialize the application
  */
 async function init() {
-    console.log('🎮 LoL Overlay Pro initializing...');
+  console.log('🎮 LoL Overlay Pro initializing...');
 
-    try {
-        allChampions = await dataDragon.getChampions();
-        renderChampionGrid(Object.values(allChampions));
-        setupEventListeners();
-        renderTierList('top');
-        renderMapContent('dragons');
-        renderWavesContent('basics');
-        console.log('✅ Application ready!');
-    } catch (error) {
-        console.error('❌ Failed to initialize:', error);
-        championGrid.innerHTML = `
+  try {
+    allChampions = await dataDragon.getChampions();
+    renderChampionGrid(Object.values(allChampions));
+    setupEventListeners();
+    renderTierList('top');
+    renderMapContent('dragons');
+    renderWavesContent('basics');
+    console.log('✅ Application ready!');
+  } catch (error) {
+    console.error('❌ Failed to initialize:', error);
+    championGrid.innerHTML = `
       <div class="loading-spinner">
         <p>Erreur de chargement</p>
         <p style="font-size: 0.8rem; color: var(--text-muted);">Vérifiez votre connexion</p>
       </div>
     `;
-    }
+  }
 }
 
 /**
  * Setup event listeners
  */
 function setupEventListeners() {
-    // Main navigation
-    mainNav.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const view = btn.dataset.view;
-            switchView(view);
-        });
+  // Main navigation
+  mainNav.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+      switchView(view);
     });
+  });
 
-    // Search input
-    searchInput.addEventListener('input', (e) => {
-        filterChampions(e.target.value, currentFilter);
+  // Search input
+  searchInput.addEventListener('input', (e) => {
+    filterChampions(e.target.value, currentFilter);
+  });
+
+  // Role filter buttons
+  roleFilters.querySelectorAll('.role-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      roleFilters.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.role;
+      filterChampions(searchInput.value, currentFilter);
     });
+  });
 
-    // Role filter buttons
-    roleFilters.querySelectorAll('.role-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            roleFilters.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentFilter = btn.dataset.role;
-            filterChampions(searchInput.value, currentFilter);
-        });
+  // Back button
+  backBtn.addEventListener('click', () => {
+    championDetail.classList.remove('active');
+    championsView.classList.add('active');
+    updateNavActive('champions');
+  });
+
+  // Tab buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`${btn.dataset.tab}Tab`).classList.add('active');
     });
+  });
 
-    // Back button
-    backBtn.addEventListener('click', () => {
-        championDetail.classList.remove('active');
-        championsView.classList.add('active');
-        updateNavActive('champions');
+  // Tier list role buttons
+  document.getElementById('tierRoleSelect').querySelectorAll('.tier-role-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tier-role-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTierList(btn.dataset.tierRole);
     });
+  });
 
-    // Tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(`${btn.dataset.tab}Tab`).classList.add('active');
-        });
+  // Map nav buttons
+  document.querySelectorAll('.map-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.map-nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMapContent(btn.dataset.mapSection);
     });
+  });
 
-    // Tier list role buttons
-    document.getElementById('tierRoleSelect').querySelectorAll('.tier-role-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tier-role-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderTierList(btn.dataset.tierRole);
-        });
+  // Waves nav buttons
+  document.querySelectorAll('.waves-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.waves-nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderWavesContent(btn.dataset.wavesSection);
     });
+  });
 
-    // Map nav buttons
-    document.querySelectorAll('.map-nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.map-nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderMapContent(btn.dataset.mapSection);
-        });
-    });
+  // Window controls (Electron)
+  if (window.electronAPI) {
+    minimizeBtn.addEventListener('click', () => window.electronAPI.minimizeWindow());
+    closeBtn.addEventListener('click', () => window.electronAPI.closeWindow());
+  }
 
-    // Waves nav buttons
-    document.querySelectorAll('.waves-nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.waves-nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderWavesContent(btn.dataset.wavesSection);
-        });
-    });
-
-    // Window controls (Electron)
-    if (window.electronAPI) {
-        minimizeBtn.addEventListener('click', () => window.electronAPI.minimizeWindow());
-        closeBtn.addEventListener('click', () => window.electronAPI.closeWindow());
-    }
+  // Quiz Buttons
+  startQuizBtn.addEventListener('click', startQuiz);
+  restartQuizBtn.addEventListener('click', resetQuiz);
 }
 
 /**
  * Switch between views
  */
 function switchView(view) {
-    currentView = view;
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    updateNavActive(view);
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  updateNavActive(view);
 
-    switch (view) {
-        case 'champions':
-            championsView.classList.add('active');
-            break;
-        case 'tierlist':
-            tierlistView.classList.add('active');
-            break;
-        case 'map':
-            mapView.classList.add('active');
-            break;
-        case 'waves':
-            wavesView.classList.add('active');
-            break;
-    }
+  switch (view) {
+    case 'home':
+      homeView.classList.add('active');
+      break;
+    case 'champions':
+      championsView.classList.add('active');
+      break;
+    case 'tierlist':
+      tierlistView.classList.add('active');
+      break;
+    case 'map':
+      mapView.classList.add('active');
+      break;
+    case 'runeterra':
+      runeterraView.classList.add('active');
+      renderRuneterraRegions();
+      break;
+    case 'quiz':
+      quizView.classList.add('active');
+      break;
+    case 'waves':
+      wavesView.classList.add('active');
+      break;
+  }
 }
 
 function updateNavActive(view) {
-    mainNav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    mainNav.querySelector(`[data-view="${view}"]`)?.classList.add('active');
+  mainNav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  mainNav.querySelector(`[data-view="${view}"]`)?.classList.add('active');
 }
 
 /**
  * Filter champions
  */
 function filterChampions(searchTerm, role) {
-    const filtered = Object.values(allChampions).filter(champion => {
-        const matchesSearch = champion.name.toLowerCase().includes(searchTerm.toLowerCase());
-        let matchesRole = true;
-        if (role !== 'all') {
-            const targetTags = roleMap[role] || [];
-            matchesRole = champion.tags.some(tag => targetTags.includes(tag));
-        }
-        return matchesSearch && matchesRole;
-    });
-    renderChampionGrid(filtered);
+  const filtered = Object.values(allChampions).filter(champion => {
+    const matchesSearch = champion.name.toLowerCase().includes(searchTerm.toLowerCase());
+    let matchesRole = true;
+    if (role !== 'all') {
+      const targetTags = roleMap[role] || [];
+      matchesRole = champion.tags.some(tag => targetTags.includes(tag));
+    }
+    return matchesSearch && matchesRole;
+  });
+  renderChampionGrid(filtered);
 }
 
 /**
  * Render champion grid with tier badges
  */
 function renderChampionGrid(champions) {
-    if (champions.length === 0) {
-        championGrid.innerHTML = '<div class="loading-spinner"><p>Aucun champion trouvé</p></div>';
-        return;
-    }
+  if (champions.length === 0) {
+    championGrid.innerHTML = '<div class="loading-spinner"><p>Aucun champion trouvé</p></div>';
+    return;
+  }
 
-    champions.sort((a, b) => a.name.localeCompare(b.name));
+  champions.sort((a, b) => a.name.localeCompare(b.name));
 
-    championGrid.innerHTML = champions.map(champion => {
-        const tier = getChampionTier(champion.name, 'mid') || getChampionTier(champion.name, 'top') || 'B';
-        const tierColor = tierColors[tier];
+  championGrid.innerHTML = champions.map(champion => {
+    const tier = getChampionTier(champion.name, 'mid') || getChampionTier(champion.name, 'top') || 'B';
+    const tierColor = tierColors[tier];
 
-        return `
+    return `
       <div class="champion-card" data-id="${champion.id}">
         <div class="tier-indicator" style="background: ${tierColor.bg}; color: ${tierColor.text}">${tier}</div>
         <img src="${dataDragon.getChampionIconUrl(champion.id)}" alt="${champion.name}" loading="lazy">
         <div class="champion-name-overlay">${champion.name}</div>
       </div>
     `;
-    }).join('');
+  }).join('');
 
-    championGrid.querySelectorAll('.champion-card').forEach(card => {
-        card.addEventListener('click', () => showChampionDetail(card.dataset.id));
-    });
+  championGrid.querySelectorAll('.champion-card').forEach(card => {
+    card.addEventListener('click', () => showChampionDetail(card.dataset.id));
+  });
 }
 
 /**
  * Show champion detail view
  */
 async function showChampionDetail(championId) {
-    try {
-        currentChampion = await dataDragon.getChampionDetail(championId);
-        // Pass champion data for role-based build generation
-        const detailedBuild = getDetailedBuild(championId, currentChampion);
+  try {
+    currentChampion = await dataDragon.getChampionDetail(championId);
+    // Pass champion data for role-based build generation
+    const detailedBuild = getDetailedBuild(championId, currentChampion);
 
-        // Switch views
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        championDetail.classList.add('active');
+    // Switch views
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    championDetail.classList.add('active');
 
-        // Update header
-        document.getElementById('championSplash').src = dataDragon.getChampionSplashUrl(championId);
-        document.getElementById('championName').textContent = currentChampion.name;
-        document.getElementById('championTitle').textContent = currentChampion.title;
-        document.getElementById('championTags').innerHTML = currentChampion.tags
-            .map(tag => `<span class="tag">${tag}</span>`).join('');
+    // Update header
+    document.getElementById('championSplash').src = dataDragon.getChampionSplashUrl(championId);
+    document.getElementById('championName').textContent = currentChampion.name;
+    document.getElementById('championTitle').textContent = currentChampion.title;
+    document.getElementById('championTags').innerHTML = currentChampion.tags
+      .map(tag => `<span class="tag">${tag}</span>`).join('');
 
-        // Tier badge
-        const tier = detailedBuild?.tier || 'B';
-        const tierColor = tierColors[tier];
-        document.getElementById('championTierBadge').innerHTML = `
+    // Tier badge
+    const tier = detailedBuild?.tier || 'B';
+    const tierColor = tierColors[tier];
+    document.getElementById('championTierBadge').innerHTML = `
       <span class="tier-badge" style="background: ${tierColor.bg}; color: ${tierColor.text}">${tier} Tier</span>
     `;
 
-        // Reset tabs
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-        document.querySelector('[data-tab="stats"]').classList.add('active');
-        document.getElementById('statsTab').classList.add('active');
+    // Reset tabs
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="stats"]').classList.add('active');
+    document.getElementById('statsTab').classList.add('active');
 
-        // Render all content
-        renderStats(currentChampion.stats);
-        renderAbilities(currentChampion, detailedBuild);
-        renderDetailedBuild(detailedBuild, championId);
-        renderDetailedRunes(detailedBuild);
-        renderCombos(detailedBuild);
-        renderMatchups(detailedBuild);
+    // Render all content
+    renderStats(currentChampion.stats);
+    renderAbilities(currentChampion, detailedBuild);
+    renderDetailedBuild(detailedBuild, championId);
+    renderDetailedRunes(detailedBuild);
+    renderCombos(detailedBuild);
+    renderMatchups(detailedBuild);
 
-    } catch (error) {
-        console.error('Failed to load champion:', error);
-    }
+  } catch (error) {
+    console.error('Failed to load champion:', error);
+  }
 }
 
 /**
  * Render stats
  */
 function renderStats(stats) {
-    const statsConfig = [
-        { key: 'hp', name: 'Vie', icon: '❤️', growth: 'hpperlevel' },
-        { key: 'mp', name: 'Mana', icon: '💧', growth: 'mpperlevel' },
-        { key: 'armor', name: 'Armure', icon: '🛡️', growth: 'armorperlevel' },
-        { key: 'spellblock', name: 'Résist. Mag.', icon: '✨', growth: 'spellblockperlevel' },
-        { key: 'attackdamage', name: 'Dégâts AD', icon: '⚔️', growth: 'attackdamageperlevel' },
-        { key: 'attackspeed', name: 'Vitesse Atq', icon: '⚡', growth: 'attackspeedperlevel' },
-        { key: 'movespeed', name: 'Vitesse', icon: '👟', growth: null },
-        { key: 'attackrange', name: 'Portée', icon: '🎯', growth: null }
-    ];
+  const statsConfig = [
+    { key: 'hp', name: 'Vie', icon: '❤️', growth: 'hpperlevel' },
+    { key: 'mp', name: 'Mana', icon: '💧', growth: 'mpperlevel' },
+    { key: 'armor', name: 'Armure', icon: '🛡️', growth: 'armorperlevel' },
+    { key: 'spellblock', name: 'Résist. Mag.', icon: '✨', growth: 'spellblockperlevel' },
+    { key: 'attackdamage', name: 'Dégâts AD', icon: '⚔️', growth: 'attackdamageperlevel' },
+    { key: 'attackspeed', name: 'Vitesse Atq', icon: '⚡', growth: 'attackspeedperlevel' },
+    { key: 'movespeed', name: 'Vitesse', icon: '👟', growth: null },
+    { key: 'attackrange', name: 'Portée', icon: '🎯', growth: null }
+  ];
 
-    document.getElementById('statsGrid').innerHTML = statsConfig.map(stat => {
-        const value = stats[stat.key];
-        const growth = stat.growth ? stats[stat.growth] : null;
-        return `
+  document.getElementById('statsGrid').innerHTML = statsConfig.map(stat => {
+    const value = stats[stat.key];
+    const growth = stat.growth ? stats[stat.growth] : null;
+    return `
       <div class="stat-card">
         <span class="stat-icon">${stat.icon}</span>
         <div class="stat-info">
@@ -290,21 +332,21 @@ function renderStats(stats) {
         </div>
       </div>
     `;
-    }).join('');
+  }).join('');
 }
 
 /**
  * Render abilities with skill order
  */
 function renderAbilities(champion, build) {
-    // Skill order section
-    const skillOrderSection = document.getElementById('skillOrderSection');
-    if (build?.skillOrder) {
+  // Skill order section
+  const skillOrderSection = document.getElementById('skillOrderSection');
+  if (build?.skillOrder) {
 
-        // Skill Order Visualization (only if levels exist)
-        let skillOrderHtml = '';
-        if (build.skillOrder?.levels) {
-            skillOrderHtml = `
+    // Skill Order Visualization (only if levels exist)
+    let skillOrderHtml = '';
+    if (build.skillOrder?.levels) {
+      skillOrderHtml = `
       <div class="skill-order-visual">
         <div class="skill-row">
           <span class="skill-key">Q</span>
@@ -324,8 +366,8 @@ function renderAbilities(champion, build) {
         </div>
       </div>
     `;
-        }
-        skillOrderSection.innerHTML = `
+    }
+    skillOrderSection.innerHTML = `
       <div class="skill-order-card">
         <h4>📈 Ordre des Skills</h4>
         <div class="skill-priority">
@@ -335,27 +377,27 @@ function renderAbilities(champion, build) {
         ${build.skillOrder.notes ? `<p class="skill-notes">${build.skillOrder.notes}</p>` : ''}
       </div>
     `;
-    } else {
-        skillOrderSection.innerHTML = '';
-    }
+  } else {
+    skillOrderSection.innerHTML = '';
+  }
 
-    // Abilities list
-    const abilities = [
-        {
-            key: 'P',
-            name: champion.passive.name,
-            description: champion.passive.description,
-            icon: dataDragon.getPassiveIconUrl(champion.passive.image.full)
-        },
-        ...champion.spells.map((spell, index) => ({
-            key: ['Q', 'W', 'E', 'R'][index],
-            name: spell.name,
-            description: spell.description,
-            icon: dataDragon.getAbilityIconUrl(spell.image.full)
-        }))
-    ];
+  // Abilities list
+  const abilities = [
+    {
+      key: 'P',
+      name: champion.passive.name,
+      description: champion.passive.description,
+      icon: dataDragon.getPassiveIconUrl(champion.passive.image.full)
+    },
+    ...champion.spells.map((spell, index) => ({
+      key: ['Q', 'W', 'E', 'R'][index],
+      name: spell.name,
+      description: spell.description,
+      icon: dataDragon.getAbilityIconUrl(spell.image.full)
+    }))
+  ];
 
-    document.getElementById('abilitiesList').innerHTML = abilities.map(ability => `
+  document.getElementById('abilitiesList').innerHTML = abilities.map(ability => `
     <div class="ability-card">
       <img class="ability-icon" src="${ability.icon}" alt="${ability.name}">
       <div class="ability-info">
@@ -373,21 +415,21 @@ function renderAbilities(champion, build) {
  * Render detailed build
  */
 async function renderDetailedBuild(build, championId) {
-    const buildPath = document.getElementById('buildPath');
+  const buildPath = document.getElementById('buildPath');
 
-    if (!build) {
-        buildPath.innerHTML = `
+  if (!build) {
+    buildPath.innerHTML = `
       <div class="no-build">
         <p>Build détaillé non disponible</p>
         <p class="text-muted">Consultez les sites comme u.gg ou op.gg</p>
       </div>
     `;
-        return;
-    }
+    return;
+  }
 
-    const items = await dataDragon.getItems();
+  const items = await dataDragon.getItems();
 
-    buildPath.innerHTML = `
+  buildPath.innerHTML = `
     <div class="build-section">
       <h4>🎯 Summoners</h4>
       <div class="summoners-display">
@@ -399,13 +441,13 @@ async function renderDetailedBuild(build, championId) {
       <h4>🚀 Starter</h4>
       <div class="items-row">
         ${build.itemBuilds?.starter?.items?.map(id => {
-        const item = items[id];
-        return item ? `
+    const item = items[id];
+    return item ? `
             <div class="item-card" title="${item.name}">
               <img src="${dataDragon.getItemIconUrl(id)}" alt="${item.name}">
             </div>
           ` : '';
-    }).join('') || ''}
+  }).join('') || ''}
       </div>
     </div>
     
@@ -414,13 +456,13 @@ async function renderDetailedBuild(build, championId) {
       <p class="build-order">${build.itemBuilds?.core?.order || ''}</p>
       <div class="items-row">
         ${build.itemBuilds?.core?.items?.map(id => {
-        const item = items[id];
-        return item ? `
+    const item = items[id];
+    return item ? `
             <div class="item-card core-item" title="${item.name}">
               <img src="${dataDragon.getItemIconUrl(id)}" alt="${item.name}">
             </div>
           ` : '';
-    }).join('') || ''}
+  }).join('') || ''}
       </div>
     </div>
     
@@ -431,9 +473,9 @@ async function renderDetailedBuild(build, championId) {
           <div class="situational-item">
             <div class="items-row">
               ${data.items?.map(id => {
-        const item = items[id];
-        return item ? `<div class="item-card small" title="${item.name}"><img src="${dataDragon.getItemIconUrl(id)}" alt="${item.name}"></div>` : '';
-    }).join('') || ''}
+    const item = items[id];
+    return item ? `<div class="item-card small" title="${item.name}"><img src="${dataDragon.getItemIconUrl(id)}" alt="${item.name}"></div>` : '';
+  }).join('') || ''}
             </div>
             <span class="when-text">${data.when}</span>
           </div>
@@ -445,13 +487,13 @@ async function renderDetailedBuild(build, championId) {
       <h4>🏆 Full Build</h4>
       <div class="items-row full-build">
         ${build.itemBuilds?.fullBuild?.standard?.map(id => {
-        const item = items[id];
-        return item ? `
+    const item = items[id];
+    return item ? `
             <div class="item-card" title="${item.name}">
               <img src="${dataDragon.getItemIconUrl(id)}" alt="${item.name}">
             </div>
           ` : '';
-    }).join('') || ''}
+  }).join('') || ''}
       </div>
     </div>
   `;
@@ -461,16 +503,16 @@ async function renderDetailedBuild(build, championId) {
  * Render detailed runes
  */
 function renderDetailedRunes(build) {
-    const container = document.getElementById('runesContainer');
+  const container = document.getElementById('runesContainer');
 
-    if (!build?.runes) {
-        container.innerHTML = '<p class="text-muted">Runes non disponibles</p>';
-        return;
-    }
+  if (!build?.runes) {
+    container.innerHTML = '<p class="text-muted">Runes non disponibles</p>';
+    return;
+  }
 
-    const runes = build.runes;
+  const runes = build.runes;
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="rune-tree primary">
       <div class="rune-tree-header">
         <span class="tree-icon">🎯</span>
@@ -507,10 +549,10 @@ function renderDetailedRunes(build) {
  * Render combos
  */
 function renderCombos(build) {
-    const container = document.getElementById('combosList');
+  const container = document.getElementById('combosList');
 
-    if (!build?.combos || build.combos.length === 0) {
-        container.innerHTML = `
+  if (!build?.combos || build.combos.length === 0) {
+    container.innerHTML = `
       <div class="no-combos">
         <p>Combos spécifiques non disponibles</p>
         <div class="generic-tips">
@@ -523,10 +565,10 @@ function renderCombos(build) {
         </div>
       </div>
     `;
-        return;
-    }
+    return;
+  }
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="combos-header">
       <h4>💥 Combos</h4>
     </div>
@@ -545,19 +587,19 @@ function renderCombos(build) {
  * Render matchups
  */
 function renderMatchups(build) {
-    const container = document.getElementById('matchupsContainer');
+  const container = document.getElementById('matchupsContainer');
 
-    if (!build?.counters) {
-        container.innerHTML = `
+  if (!build?.counters) {
+    container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-chess-pawn"></i>
                 <p>Données de matchup non disponibles pour ce champion.</p>
                 <small class="text-muted">Utilisez le build générique ci-dessus.</small>
             </div>`;
-        return;
-    }
+    return;
+  }
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="matchup-section good">
       <h4>✅ Fort Contre</h4>
       <div class="matchup-list">
@@ -589,19 +631,19 @@ function renderMatchups(build) {
  * Render tier list
  */
 function renderTierList(role) {
-    const content = document.getElementById('tierlistContent');
-    const tiers = tierList[role];
+  const content = document.getElementById('tierlistContent');
+  const tiers = tierList[role];
 
-    if (!tiers) {
-        content.innerHTML = '<p>Tier list non disponible</p>';
-        return;
-    }
+  if (!tiers) {
+    content.innerHTML = '<p>Tier list non disponible</p>';
+    return;
+  }
 
-    content.innerHTML = ['S', 'A', 'B', 'C', 'D'].map(tier => {
-        const champions = tiers[tier] || [];
-        const colors = tierColors[tier];
+  content.innerHTML = ['S', 'A', 'B', 'C', 'D'].map(tier => {
+    const champions = tiers[tier] || [];
+    const colors = tierColors[tier];
 
-        return `
+    return `
       <div class="tier-row">
         <div class="tier-label" style="background: ${colors.bg}; color: ${colors.text}; box-shadow: 0 0 15px ${colors.glow}">
           ${tier}
@@ -615,18 +657,18 @@ function renderTierList(role) {
         </div>
       </div>
     `;
-    }).join('');
+  }).join('');
 }
 
 /**
  * Render map content
  */
 function renderMapContent(section) {
-    const content = document.getElementById('mapContent');
+  const content = document.getElementById('mapContent');
 
-    switch (section) {
-        case 'dragons':
-            content.innerHTML = `
+  switch (section) {
+    case 'dragons':
+      content.innerHTML = `
         <div class="map-section-content">
           <h3>🐉 Dragons</h3>
           <div class="dragons-grid">
@@ -650,10 +692,10 @@ function renderMapContent(section) {
           </div>
         </div>
       `;
-            break;
+      break;
 
-        case 'baron':
-            content.innerHTML = `
+    case 'baron':
+      content.innerHTML = `
         <div class="map-section-content">
           <h3>👁️ Baron Nashor</h3>
           <div class="baron-card">
@@ -681,10 +723,10 @@ function renderMapContent(section) {
           </div>
         </div>
       `;
-            break;
+      break;
 
-        case 'jungle':
-            content.innerHTML = `
+    case 'jungle':
+      content.innerHTML = `
         <div class="map-section-content">
           <h3>🌲 Camps Jungle</h3>
           <div class="camps-grid">
@@ -706,10 +748,10 @@ function renderMapContent(section) {
           </div>
         </div>
       `;
-            break;
+      break;
 
-        case 'towers':
-            content.innerHTML = `
+    case 'towers':
+      content.innerHTML = `
         <div class="map-section-content">
           <h3>🏰 Tours & Structures</h3>
           <div class="towers-grid">
@@ -750,19 +792,19 @@ function renderMapContent(section) {
           </div>
         </div>
       `;
-            break;
-    }
+      break;
+  }
 }
 
 /**
  * Render waves content
  */
 function renderWavesContent(section) {
-    const content = document.getElementById('wavesContent');
+  const content = document.getElementById('wavesContent');
 
-    switch (section) {
-        case 'basics':
-            content.innerHTML = `
+  switch (section) {
+    case 'basics':
+      content.innerHTML = `
         <div class="waves-section-content">
           <h3>📚 Minions & Timing</h3>
           
@@ -799,10 +841,10 @@ function renderWavesContent(section) {
           </div>
         </div>
       `;
-            break;
+      break;
 
-        case 'states':
-            content.innerHTML = `
+    case 'states':
+      content.innerHTML = `
         <div class="waves-section-content">
           <h3>🎯 États de la Vague</h3>
           <div class="states-grid">
@@ -842,10 +884,10 @@ function renderWavesContent(section) {
           </div>
         </div>
       `;
-            break;
+      break;
 
-        case 'tips':
-            content.innerHTML = `
+    case 'tips':
+      content.innerHTML = `
         <div class="waves-section-content">
           <h3>💡 Tips par Phase</h3>
           
@@ -872,10 +914,10 @@ function renderWavesContent(section) {
           </div>
         </div>
       `;
-            break;
+      break;
 
-        case 'xp':
-            content.innerHTML = `
+    case 'xp':
+      content.innerHTML = `
         <div class="waves-section-content">
           <h3>📈 XP & Gold</h3>
           
@@ -918,15 +960,161 @@ function renderWavesContent(section) {
           </div>
         </div>
       `;
-            break;
+      break;
+  }
+}
+
+/**
+ * Render Runeterra regions list
+ */
+function renderRuneterraRegions() {
+  regionsList.innerHTML = regions.map(region => `
+    <div class="region-item" data-id="${region.id}">
+      <span class="region-icon">${region.icon}</span>
+      <span class="region-name">${region.name}</span>
+    </div>
+  `).join('');
+
+  regionsList.querySelectorAll('.region-item').forEach(item => {
+    item.addEventListener('click', () => {
+      regionsList.querySelectorAll('.region-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      showRegionDetail(item.dataset.id);
+    });
+  });
+}
+
+/**
+ * Show region details and champions
+ */
+function showRegionDetail(regionId) {
+  const region = regions.find(r => r.id === regionId);
+  if (!region) return;
+
+  regionDetail.innerHTML = `
+    <div class="region-detail-content">
+      <div class="region-detail-header">
+        <h2>${region.icon} ${region.name}</h2>
+        <p class="region-desc">${region.description}</p>
+      </div>
+      <div class="region-champions-grid">
+        ${region.champions.map(champId => {
+    // Find champion by ID (exact or case-insensitive fallback)
+    let champ = allChampions[champId];
+    if (!champ) {
+      // Case-insensitive search fallback
+      const lowerId = champId.toLowerCase();
+      const realId = Object.keys(allChampions).find(k => k.toLowerCase() === lowerId);
+      if (realId) champ = allChampions[realId];
     }
+
+    const name = champ ? champ.name : champId;
+    const id = champ ? champ.id : champId;
+
+    return `
+            <div class="region-champ-card" data-id="${id}">
+              <img class="region-champ-img" src="${dataDragon.getChampionIconUrl(id)}" alt="${name}" 
+                onerror="this.src='https://ddragon.leagueoflegends.com/cdn/14.1.1/img/profileicon/29.png'">
+              <div class="region-champ-name">${name}</div>
+            </div>
+          `;
+  }).join('')}
+      </div>
+    </div>
+  `;
+
+  regionDetail.querySelectorAll('.region-champ-card').forEach(card => {
+    card.addEventListener('click', () => showChampionDetail(card.dataset.id));
+  });
+}
+
+/**
+ * Quiz Functions
+ */
+function startQuiz() {
+  quizStep = 0;
+  quizScores = { tank: 0, fighter: 0, mage: 0, assassin: 0, marksman: 0, support: 0 };
+  quizIntro.style.display = 'none';
+  quizResult.style.display = 'none';
+  quizQuestionContainer.style.display = 'block';
+  renderQuizQuestion();
+}
+
+function resetQuiz() {
+  startQuiz();
+}
+
+function renderQuizQuestion() {
+  const question = quizQuestions[quizStep];
+  questionText.textContent = question.text;
+
+  // Progress bar
+  const progress = ((quizStep) / quizQuestions.length) * 100;
+  quizProgress.style.width = `${progress}%`;
+
+  quizOptions.innerHTML = question.options.map((option, index) => `
+    <div class="quiz-option" data-index="${index}">
+      ${option.text}
+    </div>
+  `).join('');
+
+  quizOptions.querySelectorAll('.quiz-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const index = opt.dataset.index;
+      handleQuizAnswer(question.options[index].values);
+    });
+  });
+}
+
+function handleQuizAnswer(values) {
+  for (const [role, score] of Object.entries(values)) {
+    quizScores[role] += score;
+  }
+
+  quizStep++;
+
+  if (quizStep < quizQuestions.length) {
+    renderQuizQuestion();
+  } else {
+    showQuizResult();
+  }
+}
+
+function showQuizResult() {
+  quizProgress.style.width = `100%`;
+  quizQuestionContainer.style.display = 'none';
+  quizResult.style.display = 'block';
+
+  // Find top role
+  const topRole = Object.entries(quizScores).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+  const resultRoleSpan = document.getElementById('resultRole');
+  resultRoleSpan.textContent = roleTitles[topRole];
+
+  // Suggest a random champion from that role
+  const suggestions = championSuggestions[topRole];
+  const randomChampName = suggestions[Math.floor(Math.random() * suggestions.length)];
+
+  // Try to find the champion ID (some might need mapping if names differ from IDs)
+  const champId = randomChampName.replace(/\s/g, ''); // Simple normalization
+  const champData = allChampions[champId] || { name: randomChampName, id: champId };
+
+  const resultChampionDiv = document.getElementById('resultChampion');
+  resultChampionDiv.innerHTML = `
+    <img class="result-champ-img" src="${dataDragon.getChampionIconUrl(champId)}" alt="${champData.name}">
+    <div class="result-champ-name">${champData.name}</div>
+    <button class="cta-btn primary" id="viewResultChampBtn">Voir le guide</button>
+  `;
+
+  document.getElementById('viewResultChampBtn').addEventListener('click', () => {
+    showChampionDetail(champId);
+  });
 }
 
 /**
  * Strip HTML tags
  */
 function stripTags(text) {
-    return text.replace(/<[^>]*>/g, '').replace(/\{\{[^}]+\}\}/g, '');
+  return text.replace(/<[^>]*>/g, '').replace(/\{\{[^}]+\}\}/g, '');
 }
 
 // Initialize

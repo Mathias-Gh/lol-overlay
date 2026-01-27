@@ -27,14 +27,61 @@
 
     <!-- Main Navigation -->
     <nav class="main-nav" id="mainNav">
-      <button class="nav-btn active" data-view="champions">🎮 Champions</button>
+      <button class="nav-btn active" data-view="home">🏠 Accueil</button>
+      <button class="nav-btn" data-view="champions">🎮 Champions</button>
       <button class="nav-btn" data-view="tierlist">📊 Tier List</button>
-      <button class="nav-btn" data-view="map">🗺️ Carte</button>
+      <button class="nav-btn" data-view="map">🗺️ Carte Jeu</button>
+      <button class="nav-btn" data-view="runeterra">🌍 Runeterra</button>
+      <button class="nav-btn" data-view="quiz">🧩 Quiz</button>
       <button class="nav-btn" data-view="waves">🌊 Waves</button>
     </nav>
 
+    <!-- ==================== HOME VIEW ==================== -->
+    <div class="view active" id="homeView">
+      <div class="hero-section">
+        <div class="hero-content">
+          <h1 class="hero-title">Dominez la Faille</h1>
+          <p class="hero-subtitle">Votre compagnon ultime pour League of Legends. Build, map, et analyses en temps réel.
+          </p>
+          <div class="hero-actions">
+            <button class="cta-btn primary"
+              onclick="document.querySelector('[data-view=\'champions\']').click()">Découvrir les Champions</button>
+            <button class="cta-btn secondary" onclick="document.querySelector('[data-view=\'quiz\']').click()">Trouver
+              mon Champion</button>
+          </div>
+        </div>
+        <div class="hero-decoration">
+          <div class="glow-circle"></div>
+          <div class="glow-circle secondary"></div>
+        </div>
+      </div>
+
+      <div class="home-grid">
+        <div class="home-card features">
+          <h3>🚀 Fonctionnalités Clés</h3>
+          <ul>
+            <li><span>📊</span> Tier List mise à jour quotidiennement</li>
+            <li><span>🛠️</span> Builds optimisés pour chaque rôle</li>
+            <li><span>🗺️</span> Guide interactif de la map</li>
+            <li><span>🌊</span> Gestion parfaite des vagues</li>
+          </ul>
+        </div>
+        <div class="home-card news">
+          <h3>🔥 Actualités</h3>
+          <div class="news-item">
+            <span class="news-tag">PATCH 15.2</span>
+            <p>Nouveaux builds pour les mages de contrôle.</p>
+          </div>
+          <div class="news-item">
+            <span class="news-tag">EVENT</span>
+            <p>Explorez les régions de Runeterra dès maintenant !</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ==================== CHAMPIONS VIEW ==================== -->
-    <div class="view active" id="championsView">
+    <div class="view" id="championsView">
       <!-- Search Section -->
       <div class="search-section">
         <div class="search-container">
@@ -155,6 +202,51 @@
         <button class="waves-nav-btn" data-waves-section="xp">📈 XP/Gold</button>
       </div>
       <div class="waves-content" id="wavesContent"></div>
+    </div>
+
+    <!-- ==================== RUNETERRA VIEW ==================== -->
+    <div class="view" id="runeterraView">
+      <div class="runeterra-header">
+        <h2>🌍 Carte de Runeterra</h2>
+        <p>Explorez les régions et les champions qui y sont nés.</p>
+      </div>
+      <div class="runeterra-container">
+        <div class="regions-list" id="regionsList">
+          <!-- Regions will be injected here -->
+        </div>
+        <div class="region-detail" id="regionDetail">
+          <div class="region-placeholder">
+            <p>Sélectionnez une région pour voir ses champions</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== QUIZ VIEW ==================== -->
+    <div class="view" id="quizView">
+      <div class="quiz-container" id="quizContainer">
+        <div class="quiz-intro" id="quizIntro">
+          <h2>🧩 Trouve ton Rôle & ton Champion</h2>
+          <p>Réponds à quelques questions pour découvrir quel style de jeu te correspond le mieux.</p>
+          <button class="cta-btn primary" id="startQuizBtn">Commencer le Quiz</button>
+        </div>
+        <div class="quiz-question-container" id="quizQuestionContainer" style="display: none;">
+          <div class="quiz-progress-bar">
+            <div class="quiz-progress" id="quizProgress"></div>
+          </div>
+          <h3 id="questionText">Question ?</h3>
+          <div class="quiz-options" id="quizOptions">
+            <!-- Options injected here -->
+          </div>
+        </div>
+        <div class="quiz-result" id="quizResult" style="display: none;">
+          <h3>Ton Profil : <span id="resultRole">Rôle</span></h3>
+          <div class="result-champion" id="resultChampion">
+            <!-- Recommended champion here -->
+          </div>
+          <button class="cta-btn secondary" id="restartQuizBtn">Recommencer</button>
+        </div>
+      </div>
     </div>
   </div>
 
