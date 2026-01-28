@@ -40,11 +40,20 @@ const backBtn = document.getElementById('backBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
 const closeBtn = document.getElementById('closeBtn');
 
+// Items Elements
+const itemsView = document.getElementById('itemsView');
+const itemsGrid = document.getElementById('itemsGrid');
+const itemsSearchInput = document.getElementById('itemsSearchInput');
+const itemsFilters = document.getElementById('itemsFilters');
+const itemDetailPanel = document.getElementById('itemDetailPanel');
+
 // State
 let allChampions = {};
 let currentFilter = 'all';
 let currentChampion = null;
 let currentView = 'home';
+let allItems = {};
+let currentItemsFilter = 'all';
 
 // Quiz State
 let quizStep = 0;
@@ -76,10 +85,12 @@ async function init() {
   try {
     allChampions = await dataDragon.getChampions();
     renderChampionGrid(Object.values(allChampions));
+    allItems = await dataDragon.getItems();
     setupEventListeners();
     renderTierList('top');
     renderMapContent('dragons');
     renderWavesContent('basics');
+    renderItemsGrid(Object.values(allItems));
     console.log('✅ Application ready!');
   } catch (error) {
     console.error('❌ Failed to initialize:', error);
@@ -172,6 +183,24 @@ function setupEventListeners() {
   // Quiz Buttons
   startQuizBtn.addEventListener('click', startQuiz);
   restartQuizBtn.addEventListener('click', resetQuiz);
+
+  // Items Listeners
+  if (itemsSearchInput) {
+    itemsSearchInput.addEventListener('input', (e) => {
+      filterItems(e.target.value, currentItemsFilter);
+    });
+  }
+
+  if (itemsFilters) {
+    itemsFilters.querySelectorAll('.items-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        itemsFilters.querySelectorAll('.items-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentItemsFilter = btn.dataset.filter;
+        filterItems(itemsSearchInput.value, currentItemsFilter);
+      });
+    });
+  }
 }
 
 /**
@@ -188,6 +217,9 @@ function switchView(view) {
       break;
     case 'champions':
       championsView.classList.add('active');
+      break;
+    case 'items':
+      itemsView.classList.add('active');
       break;
     case 'tierlist':
       tierlistView.classList.add('active');
@@ -627,6 +659,7 @@ function renderMatchups(build) {
   `;
 }
 
+
 /**
  * Render tier list
  */
@@ -640,7 +673,7 @@ function renderTierList(role) {
   }
 
   content.innerHTML = ['S', 'A', 'B', 'C', 'D'].map(tier => {
-    const champions = tiers[tier] || [];
+    const championsInTier = tiers[tier] || [];
     const colors = tierColors[tier];
 
     return `
@@ -649,15 +682,33 @@ function renderTierList(role) {
           ${tier}
         </div>
         <div class="tier-champions">
-          ${champions.length > 0 ? champions.map(name => `
-            <div class="tier-champion" data-name="${name}">
+          ${championsInTier.length > 0 ? championsInTier.map(name => {
+      // Find the champion ID for the name
+      const champId = Object.keys(allChampions).find(id =>
+        allChampions[id].name.toLowerCase() === name.toLowerCase()
+      ) || name.replace(/[^a-zA-Z]/g, '');
+
+      return `
+            <div class="tier-champion" data-id="${champId}" title="Voir le build de ${name}">
+              <img src="${dataDragon.getChampionIconUrl(champId)}" alt="${name}">
               <span class="champ-name">${name}</span>
             </div>
-          `).join('') : '<span class="empty-tier">Aucun champion</span>'}
+          `;
+    }).join('') : '<span class="empty-tier">Aucun champion</span>'}
         </div>
       </div>
     `;
   }).join('');
+
+  // Add click listeners to tier champions
+  content.querySelectorAll('.tier-champion').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.id;
+      if (allChampions[id]) {
+        showChampionDetail(id);
+      }
+    });
+  });
 }
 
 /**
@@ -1114,8 +1165,180 @@ function showQuizResult() {
  * Strip HTML tags
  */
 function stripTags(text) {
-  return text.replace(/<[^>]*>/g, '').replace(/\{\{[^}]+\}\}/g, '');
+  if (!text) return '';
+  return text.replace(/<[^>]*>?/gm, '');
 }
+
+/**
+ * Render items grid
+ */
+function renderItemsGrid(items) {
+  if (!itemsGrid) return;
+  // Filter for Summoner's Rift (map 11) and purchasable items
+  const srItems = items.filter(item => {
+    // Basic availability check
+    const isAvailableOnSR = item.maps && item.maps['11'];
+    const isPurchasable = item.gold && item.gold.purchasable;
+    const isInStore = item.inStore !== false;
+
+    // Filter out unwanted items (like placeholders or tokens)
+    const isRealItem = !item.requiredChampion && !item.requiredAlly && item.name && item.description;
+
+    // We keep boots and consumables if they are on SR
+    return isAvailableOnSR && isPurchasable && isInStore && isRealItem;
+  });
+
+  srItems.sort((a, b) => b.gold.total - a.gold.total);
+
+  itemsGrid.innerHTML = srItems.map(item => `
+    <div class="item-card" data-id="${item.image.full.split('.')[0]}" title="${item.name}">
+      <img src="${dataDragon.getItemIconUrl(item.image.full.split('.')[0])}" alt="${item.name}" loading="lazy">
+    </div>
+  `).join('');
+
+  itemsGrid.querySelectorAll('.item-card').forEach(card => {
+    card.addEventListener('click', () => showItemDetail(card.dataset.id));
+  });
+}
+
+/**
+ * Filter items
+ */
+function filterItems(searchTerm, filter) {
+  const filtered = Object.values(allItems).filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    let matchesFilter = true;
+
+    if (filter !== 'all') {
+      // Simple mapping for demonstration
+      const tags = item.tags || [];
+      if (filter === 'assassin') matchesFilter = tags.includes('Lethality') || tags.includes('ArmorPenetration');
+      if (filter === 'mage') matchesFilter = tags.includes('SpellDamage') || tags.includes('Mana');
+      if (filter === 'marksman') matchesFilter = tags.includes('CriticalStrike') || tags.includes('AttackSpeed');
+      if (filter === 'fighter') matchesFilter = tags.includes('Damage') || tags.includes('Health');
+      if (filter === 'tank') matchesFilter = tags.includes('Armor') || tags.includes('HealthRegen') || tags.includes('SpellBlock');
+      if (filter === 'support') matchesFilter = tags.includes('Support') || tags.includes('Aura');
+    }
+
+    const isAvailableOnSR = item.maps && item.maps['11'];
+    const isInStore = item.inStore !== false;
+    const isRealItem = !item.requiredChampion && !item.requiredAlly;
+
+    return matchesSearch && matchesFilter && item.gold.purchasable && isAvailableOnSR && isInStore && isRealItem;
+  });
+
+  renderItemsGrid(filtered);
+}
+
+/**
+ * Show item detail
+ */
+function showItemDetail(itemId) {
+  const item = allItems[itemId];
+  if (!item) return;
+
+  // Update active state in grid
+  itemsGrid.querySelectorAll('.item-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.id === itemId);
+  });
+
+  // Find recommended champions
+  const recommendedChamps = findRecommendedChampionsForItem(itemId);
+
+  itemDetailPanel.innerHTML = `
+    <div class="item-detail-content">
+      <div class="item-detail-header">
+        <img src="${dataDragon.getItemIconUrl(itemId)}" class="item-large-icon" alt="${item.name}">
+        <div class="item-title-group">
+          <h3 class="item-detail-name">${item.name}</h3>
+          <div class="item-detail-price">💰 ${item.gold.total} <span>(${item.gold.base} + components)</span></div>
+        </div>
+      </div>
+
+
+      <div class="item-detail-section-title">📜 Description</div>
+      <div class="item-description">
+        ${item.description}
+      </div>
+
+      ${item.from && item.from.length > 0 ? `
+        <div class="item-detail-section-title">🛠️ Build Path</div>
+        <div class="item-build-path">
+          ${item.from.map(compId => `
+            <img src="${dataDragon.getItemIconUrl(compId)}" class="component-icon" title="${allItems[compId]?.name || compId}">
+          `).join('')}
+        </div>
+      ` : ''}
+
+      ${recommendedChamps.length > 0 ? `
+        <div class="item-detail-section-title">🏆 Recommandé pour</div>
+        <div class="recommended-champions">
+          ${recommendedChamps.map(champ => `
+            <img src="${dataDragon.getChampionIconUrl(champ.id)}" class="rec-champ-icon" title="${champ.name}" onclick="window.app.showChampion('${champ.id}')">
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+/**
+ * Find champions that use this item in their build
+ */
+function findRecommendedChampionsForItem(itemId) {
+  const recommended = [];
+  const targetId = String(itemId); // Normalize to string
+
+  for (const [champId, champ] of Object.entries(allChampions)) {
+    const build = getDetailedBuild(champId, champ);
+    if (!build) continue;
+
+    const coreItems = build.itemBuilds?.core?.items || [];
+    const fullItems = build.itemBuilds?.fullBuild?.standard || [];
+
+    // Check if any item ID matches (normalized to string)
+    const isCore = coreItems.some(id => String(id) === targetId);
+    const isFull = fullItems.some(id => String(id) === targetId);
+
+    if (isCore || isFull) {
+      recommended.push({ id: champId, name: champ.name });
+    }
+
+    if (recommended.length >= 8) break;
+  }
+
+  return recommended;
+}
+
+/**
+ * Format stat name for display
+ */
+function formatStatName(stat) {
+  const mapping = {
+    'FlatPhysicalDamageMod': 'AD',
+    'FlatMagicDamageMod': 'AP',
+    'FlatCritChanceMod': 'Crit %',
+    'FlatArmorMod': 'Armure',
+    'FlatSpellBlockMod': 'Résist. Mag.',
+    'FlatHPPoolMod': 'PV',
+    'FlatMPPoolMod': 'Mana',
+    'PercentAttackSpeedMod': 'Vit. Atq %',
+    'PercentMovementSpeedMod': 'Vit. Déplac. %',
+    'FlatMovementSpeedMod': 'Vitesse',
+    'PercentLifeStealMod': 'Vol de Vie %'
+  };
+
+  let name = mapping[stat] || stat.replace('Flat', '').replace('Mod', '').replace('Percent', '').replace('Pool', '');
+  return name;
+}
+
+// Expose some functions to global for onclick handlers
+window.app = {
+  showChampion: (id) => {
+    switchView('champions');
+    showChampionDetail(id);
+  }
+};
 
 // Initialize
 init();

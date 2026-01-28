@@ -7,7 +7,7 @@
 export const tierList = {
     // TOP LANE
     top: {
-        S: ['Ambessa', 'Ksante', 'Aurora', 'Yone', 'Gwen', 'Jax', 'Camille', 'Fiora'],
+        S: ['Ambessa', 'KSante', 'Aurora', 'Yone', 'Gwen', 'Jax', 'Camille', 'Fiora'],
         A: ['Darius', 'Mordekaiser', 'Sett', 'Riven', 'Irelia', 'Renekton', 'Aatrox', 'Gragas', 'Rumble', 'Volibear'],
         B: ['Garen', 'Malphite', 'Ornn', 'Sion', 'Cho\'Gath', 'Nasus', 'Yorick', 'Illaoi', 'Urgot', 'Trundle'],
         C: ['Teemo', 'Kennen', 'Jayce', 'Gangplank', 'Vladimir', 'Kayle', 'Quinn', 'Vayne', 'Akali'],
@@ -93,7 +93,7 @@ export const championRoles = {
     Shen: ['top', 'support'], Singed: ['top'], Sion: ['top'], Teemo: ['top'],
     Trundle: ['top', 'jungle'], Tryndamere: ['top'], Urgot: ['top'], Volibear: ['top', 'jungle'],
     Yorick: ['top'], Yone: ['top', 'mid'], DrMundo: ['top', 'jungle'], ChogAth: ['top'],
-    TahmKench: ['top', 'support'], KSante: ['top'],
+    TahmKench: ['top', 'support'], Ksante: ['top'],
 
     // Junglers
     Amumu: ['jungle'], Diana: ['jungle', 'mid'], Ekko: ['jungle', 'mid'], Elise: ['jungle'],

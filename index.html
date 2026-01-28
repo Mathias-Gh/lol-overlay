@@ -29,12 +29,48 @@
     <nav class="main-nav" id="mainNav">
       <button class="nav-btn active" data-view="home">🏠 Accueil</button>
       <button class="nav-btn" data-view="champions">🎮 Champions</button>
+      <button class="nav-btn" data-view="items">⚔️ Objets</button>
       <button class="nav-btn" data-view="tierlist">📊 Tier List</button>
       <button class="nav-btn" data-view="map">🗺️ Carte Jeu</button>
       <button class="nav-btn" data-view="runeterra">🌍 Runeterra</button>
       <button class="nav-btn" data-view="quiz">🧩 Quiz</button>
       <button class="nav-btn" data-view="waves">🌊 Waves</button>
     </nav>
+
+    <!-- ==================== ITEMS VIEW ==================== -->
+    <div class="view" id="itemsView">
+      <div class="items-header">
+        <h2>⚔️ Objets Saison 16</h2>
+        <p>Découvrez tous les objets et builds optimaux pour la Faille de l'invocateur.</p>
+      </div>
+      <div class="items-search-section">
+        <div class="items-search-wrapper">
+          <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="itemsSearchInput" placeholder="Rechercher un objet" autocomplete="off">
+          </div>
+        </div>
+        <div class="items-filters" id="itemsFilters">
+          <button class="items-filter-btn active" data-filter="all">Tous</button>
+          <button class="items-filter-btn" data-filter="assassin">🗡️ Assassin</button>
+          <button class="items-filter-btn" data-filter="mage">🔮 Mage</button>
+          <button class="items-filter-btn" data-filter="marksman">🏹 ADC</button>
+          <button class="items-filter-btn" data-filter="fighter">⚔️ Fighter</button>
+          <button class="items-filter-btn" data-filter="tank">🛡️ Tank</button>
+          <button class="items-filter-btn" data-filter="support">💚 Support</button>
+        </div>
+      </div>
+      <div class="items-container">
+        <div class="items-grid" id="itemsGrid">
+          <!-- Items will be injected here -->
+        </div>
+        <div class="item-detail-panel" id="itemDetailPanel">
+          <div class="item-detail-placeholder">
+            <p>Sélectionnez un objet pour voir les détails</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ==================== HOME VIEW ==================== -->
     <div class="view active" id="homeView">
@@ -69,12 +105,12 @@
         <div class="home-card news">
           <h3>🔥 Actualités</h3>
           <div class="news-item">
-            <span class="news-tag">PATCH 15.2</span>
-            <p>Nouveaux builds pour les mages de contrôle.</p>
+            <span class="news-tag">PATCH 16.2.1</span>
+            <p>Saison 2026 : Builds Meta mis à jour pour Jinx, Ahri et Lee Sin.</p>
           </div>
           <div class="news-item">
-            <span class="news-tag">EVENT</span>
-            <p>Explorez les régions de Runeterra dès maintenant !</p>
+            <span class="news-tag">S16 META</span>
+            <p>Yun Tal Wildarrows et Malfaisance dominent la Faille.</p>
           </div>
         </div>
       </div>
@@ -106,6 +142,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- ==================== CHAMPION DETAIL VIEW ==================== -->
     <div class="view champion-detail" id="championDetail">
