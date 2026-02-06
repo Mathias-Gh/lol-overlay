@@ -25,10 +25,8 @@ class DataDragonAPI {
             const response = await fetch(`${DDRAGON_BASE}/api/versions.json`);
             const versions = await response.json();
             this.version = versions[0];
-            console.log(`📦 Using Data Dragon version: ${this.version}`);
             return this.version;
         } catch (error) {
-            console.error('Failed to fetch version:', error);
             // Fallback to a known version
             this.version = '14.1.1';
             return this.version;
@@ -48,7 +46,6 @@ class DataDragonAPI {
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
             this.champions = JSON.parse(cached);
-            console.log('✅ Loaded champions from cache');
             return this.champions;
         }
 
@@ -61,11 +58,9 @@ class DataDragonAPI {
 
             // Cache in local storage
             localStorage.setItem(cacheKey, JSON.stringify(this.champions));
-            console.log(`✅ Loaded ${Object.keys(this.champions).length} champions`);
 
             return this.champions;
         } catch (error) {
-            console.error('Failed to fetch champions:', error);
             throw error;
         }
     }
@@ -102,7 +97,6 @@ class DataDragonAPI {
 
             return champion;
         } catch (error) {
-            console.error(`Failed to fetch champion ${championId}:`, error);
             throw error;
         }
     }
@@ -123,7 +117,6 @@ class DataDragonAPI {
             this.items = data.data;
             return this.items;
         } catch (error) {
-            console.error('Failed to fetch items:', error);
             throw error;
         }
     }
@@ -143,7 +136,6 @@ class DataDragonAPI {
             this.runes = await response.json();
             return this.runes;
         } catch (error) {
-            console.error('Failed to fetch runes:', error);
             throw error;
         }
     }

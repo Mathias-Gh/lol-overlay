@@ -12,29 +12,17 @@
 
 <body>
   <div id="app">
-    <!-- Title Bar -->
-    <div class="title-bar" id="titleBar">
-      <div class="title-bar-left">
-        <span class="app-icon">⚔️</span>
-        <span class="app-title">LoL Overlay Pro</span>
-      </div>
-      <div class="title-bar-controls">
-        <span class="hotkey-hint">F1 toggle</span>
-        <button class="control-btn minimize-btn" id="minimizeBtn">─</button>
-        <button class="control-btn close-btn" id="closeBtn">✕</button>
-      </div>
-    </div>
-
     <!-- Main Navigation -->
     <nav class="main-nav" id="mainNav">
       <button class="nav-btn active" data-view="home">🏠 Accueil</button>
       <button class="nav-btn" data-view="champions">🎮 Champions</button>
+      <button class="nav-btn" data-view="player">🔍 Profil Joueur</button>
       <button class="nav-btn" data-view="items">⚔️ Objets</button>
       <button class="nav-btn" data-view="tierlist">📊 Tier List</button>
-      <button class="nav-btn" data-view="map">🗺️ Carte Jeu</button>
+      <button class="nav-btn" data-view="map">🗺️Infos de la faille </button>
       <button class="nav-btn" data-view="runeterra">🌍 Runeterra</button>
-      <button class="nav-btn" data-view="quiz">🧩 Quiz</button>
-      <button class="nav-btn" data-view="waves">🌊 Waves</button>
+      <button class="nav-btn" data-view="quiz">🧩 Trouves ton champion</button>
+      <button class="nav-btn" data-view="waves">🌊 Waves-management</button>
     </nav>
 
     <!-- ==================== ITEMS VIEW ==================== -->
@@ -156,6 +144,7 @@
           <h1 class="champion-name" id="championName"></h1>
           <p class="champion-title" id="championTitle"></p>
           <div class="champion-tags" id="championTags"></div>
+          <div class="champion-role-selector" id="championRoleSelector"></div>
         </div>
       </div>
 
@@ -282,6 +271,152 @@
             <!-- Recommended champion here -->
           </div>
           <button class="cta-btn secondary" id="restartQuizBtn">Recommencer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PLAYER SEARCH VIEW ==================== -->
+    <div class="view" id="playerView">
+      <div class="player-search-header">
+        <h2>🔍 Recherche de Joueur</h2>
+        <p>Entrez un Riot ID pour voir le profil complet du joueur</p>
+      </div>
+
+      <div class="player-search-form">
+        <div class="search-input-group">
+          <div class="input-wrapper">
+            <input type="text" id="playerGameName" placeholder="Pseudo ou Pseudo#Tag" autocomplete="off">
+            <span class="input-separator">#</span>
+            <input type="text" id="playerTagLine" placeholder="Tag" autocomplete="off" maxlength="5">
+          </div>
+          <select id="playerRegion" class="region-select">
+            <option value="euw1">🇪🇺 EU West</option>
+            <option value="eun1">🇪🇺 EU Nordic & East</option>
+            <option value="na1">🇺🇸 North America</option>
+            <option value="kr">🇰🇷 Korea</option>
+            <option value="br1">🇧🇷 Brazil</option>
+            <option value="la1">🌎 Latin America North</option>
+            <option value="la2">🌎 Latin America South</option>
+            <option value="oc1">🌏 Oceania</option>
+            <option value="tr1">🇹🇷 Turkey</option>
+            <option value="ru">🇷🇺 Russia</option>
+            <option value="jp1">🇯🇵 Japan</option>
+          </select>
+          <button class="search-player-btn" id="searchPlayerBtn">
+            <span class="btn-text">Rechercher</span>
+            <span class="btn-loading" style="display: none;">⏳</span>
+          </button>
+        </div>
+        <p class="search-hint">💡 Astuce: Vous pouvez entrer "Pseudo#Tag" directement dans le premier champ</p>
+      </div>
+
+      <!-- API Key Warning -->
+      <div class="api-key-notice" id="apiKeyNotice">
+        <details>
+          <summary>⚠️ Problèmes de recherche ?</summary>
+          <div class="api-key-content">
+            <p>La recherche utilise l'API Riot Games qui nécessite une clé valide.</p>
+            <ul>
+              <li>Les clés de développement expirent après <strong>24 heures</strong></li>
+              <li>Obtenez une nouvelle clé sur <a href="https://developer.riotgames.com"
+                  target="_blank">developer.riotgames.com</a></li>
+              <li>Mettez à jour la clé dans <code>src/api/config.js</code></li>
+            </ul>
+            <p class="api-key-tip">Ouvrez la console (F12) pour voir les logs de débogage détaillés.</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- Loading State -->
+      <div class="player-loading" id="playerLoading" style="display: none;">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Recherche en cours...</p>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div class="player-error" id="playerError" style="display: none;">
+        <div class="error-content">
+          <span class="error-icon">❌</span>
+          <p id="playerErrorMessage">Joueur non trouvé</p>
+          <button class="retry-btn" onclick="document.getElementById('playerGameName').focus()">Réessayer</button>
+        </div>
+      </div>
+
+      <!-- Player Profile -->
+      <div class="player-profile" id="playerProfile" style="display: none;">
+        <!-- Profile Header -->
+        <div class="profile-header" id="profileHeader">
+          <div class="profile-icon-wrapper">
+            <img class="profile-icon" id="profileIcon" src="" alt="Profile Icon">
+            <span class="profile-level" id="profileLevel">0</span>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name-row">
+              <h1 class="profile-name" id="profileName">Player#TAG</h1>
+              <button class="reset-profile-btn" id="resetProfileBtn" title="Effacer le joueur">
+                <i class="fas fa-plus"></i>
+                <span class="reset-text">Nouveau</span>
+              </button>
+            </div>
+            <p class="profile-region" id="profileRegion">Region</p>
+            <div class="profile-badges" id="profileBadges"></div>
+          </div>
+          <div class="profile-live-game" id="profileLiveGame" style="display: none;">
+            <span class="live-indicator">🔴 EN PARTIE</span>
+          </div>
+        </div>
+
+        <!-- Global Stats Section -->
+        <div class="profile-section global-stats-section">
+          <h3>📊 Statistiques Globales (Saison 16)</h3>
+          <div class="global-stats-grid" id="globalStatsGrid">
+            <!-- Global stats with tier icons injected here -->
+          </div>
+        </div>
+
+        <!-- Ranked Performance Leaderboard (LeagueOfGraphs Style) -->
+        <div class="profile-section ranked-leaderboard-section">
+          <h3>🏆 Champions en Classé</h3>
+
+          <div class="log-tabs">
+            <button class="log-tab active" data-log-tab="soloq">Soloqueue</button>
+            <button class="log-tab" data-log-tab="flex">Flex</button>
+            <button class="log-tab" data-log-tab="arena">Arena</button>
+          </div>
+
+          <div class="log-table-header">
+            <div class="col-name">Name</div>
+            <div class="col-played">Played</div>
+            <div class="col-winrate">Winrate</div>
+          </div>
+
+          <div class="log-list" id="rankedChampionsGrid">
+            <!-- Items injected by app.js -->
+          </div>
+        </div>
+
+        <!-- Mastery/Experience Section -->
+        <div class="profile-section masteries-section">
+          <h3>⭐ Maîtrises de Champions</h3>
+          <div class="masteries-info">
+            <span class="total-mastery" id="totalMastery">Score total: 0</span>
+          </div>
+          <div class="masteries-grid" id="masteriesGrid">
+            <!-- Sorted by Points will be injected here -->
+          </div>
+        </div>
+
+        <!-- Recent Matches Section -->
+        <div class="profile-section matches-section">
+          <h3>📜 Parties Récentes</h3>
+          <div class="matches-stats" id="matchesStats">
+            <!-- Win rate stats will be injected here -->
+          </div>
+          <div class="matches-list" id="matchesList">
+            <!-- Match history will be injected here -->
+          </div>
         </div>
       </div>
     </div>
